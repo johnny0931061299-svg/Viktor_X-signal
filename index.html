@@ -29,12 +29,7 @@
   .signal-count { margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--text-dim); }
   .signal-count strong { color:var(--green); font-size:20px; margin-right:2px; }
   .search-bar { width:100%; margin-bottom:16px; }
-  .search-bar input {
-    width:100%; padding:10px 16px;
-    background:var(--surface); border:1px solid var(--border);
-    color:var(--text); border-radius:6px; font-size:13px;
-    font-family:'Inter',sans-serif; outline:none; transition:border-color .2s;
-  }
+  .search-bar input { width:100%; padding:10px 16px; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:6px; font-size:13px; font-family:'Inter',sans-serif; outline:none; transition:border-color .2s; }
   .search-bar input:focus { border-color:var(--accent); }
   .search-bar input::placeholder { color:var(--text-dim); }
   .view-toggle { display:flex; gap:6px; margin-bottom:20px; }
@@ -108,32 +103,27 @@ const PRICE_RANGES = [
   { label:'100萬以上',   min:1000, max:Infinity },
 ];
 let currentView='price', currentData=[], sortCol='', sortAsc=true;
-
 function getFiltered() {
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  if (!q) return currentData;
-  return currentData.filter(s => s.code.includes(q) || s.name.toLowerCase().includes(q));
+  const q=document.getElementById('searchInput').value.trim().toLowerCase();
+  if(!q) return currentData;
+  return currentData.filter(s=>s.code.includes(q)||s.name.toLowerCase().includes(q));
 }
-
 function fmtVol(v) {
-  if (v >= 100000000) return (v/100000000).toFixed(1)+'億';
-  if (v >= 10000)     return (v/10000).toFixed(1)+'萬';
+  if(v>=100000000) return (v/100000000).toFixed(1)+'億';
+  if(v>=10000) return (v/10000).toFixed(1)+'萬';
   return v.toString();
 }
-
 function chgHtml(c) {
-  if (c > 0) return `<span class="up">▲${c.toFixed(2)}%</span>`;
-  if (c < 0) return `<span class="dn">▼${Math.abs(c).toFixed(2)}%</span>`;
+  if(c>0) return `<span class="up">▲${c.toFixed(2)}%</span>`;
+  if(c<0) return `<span class="dn">▼${Math.abs(c).toFixed(2)}%</span>`;
   return `<span style="color:var(--text-dim)">－</span>`;
 }
-
 function init() {
   const dates=Object.keys(ALL_DATA).sort((a,b)=>b.localeCompare(a));
   document.getElementById('dateSelect').innerHTML=dates.map(d=>`<option value="${d}">${d}</option>`).join('');
   document.getElementById('lastUpdate').textContent='更新至 '+dates[0];
   loadDate();
 }
-
 function loadDate() {
   document.getElementById('searchInput').value='';
   const date=document.getElementById('dateSelect').value;
@@ -146,82 +136,56 @@ function loadDate() {
   document.getElementById('signalCount').innerHTML=`共 <strong>${currentData.length}</strong> 支有訊號`;
   renderView();
 }
-
 function setView(v) {
   currentView=v;
   ['price','industry','table'].forEach(k=>document.getElementById('btn-'+k).classList.toggle('active',k===v));
   if(currentData.length) renderView();
 }
-
 function renderView() {
   if(currentView==='price') renderByPrice();
   if(currentView==='industry') renderByIndustry();
   if(currentView==='table') renderTable();
 }
-
 function renderByPrice() {
-  const data = getFiltered();
+  const data=getFiltered();
   const groups=PRICE_RANGES.map(r=>({...r,stocks:data.filter(s=>s.price>=r.min&&s.price<r.max)})).filter(g=>g.stocks.length);
-  if (!groups.length) { document.getElementById('mainContent').innerHTML='<div class="state-box"><div class="icon">🔍</div>找不到符合的股票</div>'; return; }
+  if(!groups.length){document.getElementById('mainContent').innerHTML='<div class="state-box"><div class="icon">🔍</div>找不到符合的股票</div>';return;}
   document.getElementById('mainContent').innerHTML='<div class="category-grid">'+groups.map(g=>
     `<div class="category-card"><div class="category-header"><span class="category-name">${g.label}</span><span class="category-badge">${g.stocks.length} 支</span></div>`+
-    g.stocks.map(s=>
-      `<div class="stock-row">
-        <span class="stock-code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></span>
-        <span class="stock-name">${s.name}</span>
-        <span class="stock-price">${s.price.toFixed(1)}</span>
-        <span class="stock-change">${chgHtml(s.change)}</span>
-      </div>`).join('')+
+    g.stocks.map(s=>`<div class="stock-row"><span class="stock-code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></span><span class="stock-name">${s.name}</span><span class="stock-price">${s.price.toFixed(1)}</span><span class="stock-change">${chgHtml(s.change)}</span></div>`).join('')+
     '</div>').join('')+'</div>';
 }
-
 function renderByIndustry() {
-  const data = getFiltered();
+  const data=getFiltered();
   const map={};
   data.forEach(s=>{const i=s.industry||'未分類';if(!map[i])map[i]=[];map[i].push(s);});
   const groups=Object.entries(map).sort((a,b)=>b[1].length-a[1].length);
-  if (!groups.length) { document.getElementById('mainContent').innerHTML='<div class="state-box"><div class="icon">🔍</div>找不到符合的股票</div>'; return; }
+  if(!groups.length){document.getElementById('mainContent').innerHTML='<div class="state-box"><div class="icon">🔍</div>找不到符合的股票</div>';return;}
   document.getElementById('mainContent').innerHTML='<div class="category-grid">'+groups.map(([ind,stocks])=>
     `<div class="category-card"><div class="category-header"><span class="category-name">${ind}</span><span class="category-badge">${stocks.length} 支</span></div>`+
-    stocks.map(s=>
-      `<div class="stock-row">
-        <span class="stock-code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></span>
-        <span class="stock-name">${s.name}</span>
-        <span class="stock-price">${s.price.toFixed(1)}</span>
-        <span class="stock-change">${chgHtml(s.change)}</span>
-      </div>`).join('')+
+    stocks.map(s=>`<div class="stock-row"><span class="stock-code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></span><span class="stock-name">${s.name}</span><span class="stock-price">${s.price.toFixed(1)}</span><span class="stock-change">${chgHtml(s.change)}</span></div>`).join('')+
     '</div>').join('')+'</div>';
 }
-
 function renderTable(col) {
-  const data = getFiltered();
-  if (col) { sortAsc = sortCol===col ? !sortAsc : true; sortCol=col; }
+  const data=getFiltered();
+  if(col){sortAsc=sortCol===col?!sortAsc:true;sortCol=col;}
   const sorted=[...data].sort((a,b)=>{
-    let va=a[sortCol||'price'], vb=b[sortCol||'price'];
-    if (typeof va==='string') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
-    return sortAsc ? va-vb : vb-va;
+    let va=a[sortCol||'price'],vb=b[sortCol||'price'];
+    if(typeof va==='string') return sortAsc?va.localeCompare(vb):vb.localeCompare(va);
+    return sortAsc?va-vb:vb-va;
   });
-  if (!sorted.length) { document.getElementById('mainContent').innerHTML='<div class="state-box"><div class="icon">🔍</div>找不到符合的股票</div>'; return; }
-  const arrow = k => sortCol===k ? (sortAsc?' ▲':' ▼') : '';
+  if(!sorted.length){document.getElementById('mainContent').innerHTML='<div class="state-box"><div class="icon">🔍</div>找不到符合的股票</div>';return;}
+  const arrow=k=>sortCol===k?(sortAsc?' ▲':' ▼'):'';
   document.getElementById('mainContent').innerHTML=
-    `<div class="table-wrap"><table>
-      <thead><tr>
-        <th onclick="renderTable('code')">代號${arrow('code')}</th>
-        <th>名稱</th>
-        <th onclick="renderTable('industry')">產業${arrow('industry')}</th>
-        <th onclick="renderTable('price')">收盤價${arrow('price')}</th>
-        <th onclick="renderTable('change')">漲跌幅${arrow('change')}</th>
-        <th onclick="renderTable('volume')">成交量${arrow('volume')}</th>
-      </tr></thead><tbody>`+
-    sorted.map(s=>
-      `<tr>
-        <td class="code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></td>
-        <td>${s.name}</td>
-        <td class="ind">${s.industry||'-'}</td>
-        <td class="price">${s.price.toFixed(1)}</td>
-        <td class="chg">${chgHtml(s.change)}</td>
-        <td class="vol">${fmtVol(s.volume)}</td>
-      </tr>`).join('')+
+    `<div class="table-wrap"><table><thead><tr>
+      <th onclick="renderTable('code')">代號${arrow('code')}</th>
+      <th>名稱</th>
+      <th onclick="renderTable('industry')">產業${arrow('industry')}</th>
+      <th onclick="renderTable('price')">收盤價${arrow('price')}</th>
+      <th onclick="renderTable('change')">漲跌幅${arrow('change')}</th>
+      <th onclick="renderTable('volume')">成交量${arrow('volume')}</th>
+    </tr></thead><tbody>`+
+    sorted.map(s=>`<tr><td class="code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></td><td>${s.name}</td><td class="ind">${s.industry||'-'}</td><td class="price">${s.price.toFixed(1)}</td><td class="chg">${chgHtml(s.change)}</td><td class="vol">${fmtVol(s.volume)}</td></tr>`).join('')+
     '</tbody></table></div>';
 }
 init();
