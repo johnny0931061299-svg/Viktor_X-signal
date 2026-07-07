@@ -10,7 +10,7 @@
     --bg:#0a0e1a; --surface:#111827; --surface2:#1a2234; --border:#1e2d45;
     --accent:#3b82f6; --accent-glow:rgba(59,130,246,0.15);
     --green:#10b981; --green-dim:rgba(16,185,129,0.12);
-    --red:#ef4444; --yellow:#f59e0b;
+    --red:#ef4444; --red-dim:rgba(239,68,68,0.12);
     --text:#e2e8f0; --text-dim:#64748b;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -29,7 +29,7 @@
   .signal-count { margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--text-dim); }
   .signal-count strong { color:var(--green); font-size:20px; margin-right:2px; }
   .search-bar { width:100%; margin-bottom:16px; }
-  .search-bar input { width:100%; padding:10px 16px; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:6px; font-size:13px; outline:none; transition:border-color .2s; }
+  .search-bar input { width:100%; padding:10px 16px; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:6px; font-size:13px; font-family:'Inter',sans-serif; outline:none; transition:border-color .2s; }
   .search-bar input:focus { border-color:var(--accent); }
   .search-bar input::placeholder { color:var(--text-dim); }
   .view-toggle { display:flex; gap:6px; margin-bottom:20px; }
@@ -49,10 +49,6 @@
   .stock-name { font-size:13px; color:var(--text); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .stock-price { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--green); width:50px; text-align:right; flex-shrink:0; }
   .stock-change { font-family:'JetBrains Mono',monospace; font-size:11px; width:54px; text-align:right; flex-shrink:0; }
-  .score-badge { font-family:'JetBrains Mono',monospace; font-size:11px; padding:2px 7px; border-radius:20px; font-weight:600; flex-shrink:0; }
-  .score-hot  { background:rgba(239,68,68,.15);   color:#ef4444; }
-  .score-mid  { background:rgba(245,158,11,.15);  color:#f59e0b; }
-  .score-low  { background:rgba(100,116,139,.15); color:#94a3b8; }
   .up { color:var(--green); }
   .dn { color:var(--red); }
   .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
@@ -106,14 +102,7 @@ const PRICE_RANGES = [
   { label:'50萬～100萬', min:500,  max:1000 },
   { label:'100萬以上',   min:1000, max:Infinity },
 ];
-let currentView='price', currentData=[], sortCol='score', sortAsc=false;
-
-function scoreBadge(s) {
-  if(s>=80) return `<span class="score-badge score-hot">🔥${s}</span>`;
-  if(s>=60) return `<span class="score-badge score-mid">⚡${s}</span>`;
-  if(s>0)   return `<span class="score-badge score-low">📌${s}</span>`;
-  return '';
-}
+let currentView='price', currentData=[], sortCol='', sortAsc=true;
 function getFiltered() {
   const q=document.getElementById('searchInput').value.trim().toLowerCase();
   if(!q) return currentData;
@@ -144,8 +133,6 @@ function loadDate() {
     document.getElementById('signalCount').innerHTML='<span style="color:var(--text-dim)">無訊號</span>';
     return;
   }
-  // 預設依評分由高到低排序
-  currentData.sort((a,b)=>b.score-a.score);
   document.getElementById('signalCount').innerHTML=`共 <strong>${currentData.length}</strong> 支有訊號`;
   renderView();
 }
@@ -165,13 +152,7 @@ function renderByPrice() {
   if(!groups.length){document.getElementById('mainContent').innerHTML='<div class="state-box"><div class="icon">🔍</div>找不到符合的股票</div>';return;}
   document.getElementById('mainContent').innerHTML='<div class="category-grid">'+groups.map(g=>
     `<div class="category-card"><div class="category-header"><span class="category-name">${g.label}</span><span class="category-badge">${g.stocks.length} 支</span></div>`+
-    g.stocks.map(s=>`<div class="stock-row">
-      <span class="stock-code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></span>
-      <span class="stock-name">${s.name}</span>
-      <span class="stock-price">${s.price.toFixed(1)}</span>
-      <span class="stock-change">${chgHtml(s.change)}</span>
-      ${scoreBadge(s.score)}
-    </div>`).join('')+
+    g.stocks.map(s=>`<div class="stock-row"><span class="stock-code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></span><span class="stock-name">${s.name}</span><span class="stock-price">${s.price.toFixed(1)}</span><span class="stock-change">${chgHtml(s.change)}</span></div>`).join('')+
     '</div>').join('')+'</div>';
 }
 function renderByIndustry() {
@@ -182,20 +163,14 @@ function renderByIndustry() {
   if(!groups.length){document.getElementById('mainContent').innerHTML='<div class="state-box"><div class="icon">🔍</div>找不到符合的股票</div>';return;}
   document.getElementById('mainContent').innerHTML='<div class="category-grid">'+groups.map(([ind,stocks])=>
     `<div class="category-card"><div class="category-header"><span class="category-name">${ind}</span><span class="category-badge">${stocks.length} 支</span></div>`+
-    stocks.map(s=>`<div class="stock-row">
-      <span class="stock-code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></span>
-      <span class="stock-name">${s.name}</span>
-      <span class="stock-price">${s.price.toFixed(1)}</span>
-      <span class="stock-change">${chgHtml(s.change)}</span>
-      ${scoreBadge(s.score)}
-    </div>`).join('')+
+    stocks.map(s=>`<div class="stock-row"><span class="stock-code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></span><span class="stock-name">${s.name}</span><span class="stock-price">${s.price.toFixed(1)}</span><span class="stock-change">${chgHtml(s.change)}</span></div>`).join('')+
     '</div>').join('')+'</div>';
 }
 function renderTable(col) {
   const data=getFiltered();
-  if(col){sortAsc=sortCol===col?!sortAsc:false;sortCol=col;}
+  if(col){sortAsc=sortCol===col?!sortAsc:true;sortCol=col;}
   const sorted=[...data].sort((a,b)=>{
-    let va=a[sortCol||'score'],vb=b[sortCol||'score'];
+    let va=a[sortCol||'price'],vb=b[sortCol||'price'];
     if(typeof va==='string') return sortAsc?va.localeCompare(vb):vb.localeCompare(va);
     return sortAsc?va-vb:vb-va;
   });
@@ -209,17 +184,8 @@ function renderTable(col) {
       <th onclick="renderTable('price')">收盤價${arrow('price')}</th>
       <th onclick="renderTable('change')">漲跌幅${arrow('change')}</th>
       <th onclick="renderTable('volume')">成交量${arrow('volume')}</th>
-      <th onclick="renderTable('score')">評分${arrow('score')}</th>
     </tr></thead><tbody>`+
-    sorted.map(s=>`<tr>
-      <td class="code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></td>
-      <td>${s.name}</td>
-      <td class="ind">${s.industry||'-'}</td>
-      <td class="price">${s.price.toFixed(1)}</td>
-      <td class="chg">${chgHtml(s.change)}</td>
-      <td class="vol">${fmtVol(s.volume)}</td>
-      <td>${scoreBadge(s.score)}</td>
-    </tr>`).join('')+
+    sorted.map(s=>`<tr><td class="code"><a class="tv-link" href="https://www.tradingview.com/chart/?symbol=TWSE:${s.code}" target="_blank">${s.code}</a></td><td>${s.name}</td><td class="ind">${s.industry||'-'}</td><td class="price">${s.price.toFixed(1)}</td><td class="chg">${chgHtml(s.change)}</td><td class="vol">${fmtVol(s.volume)}</td></tr>`).join('')+
     '</tbody></table></div>';
 }
 init();
