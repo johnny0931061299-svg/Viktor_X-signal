@@ -106,6 +106,19 @@
   .state-box .icon{font-size:32px;margin-bottom:12px;}
   a.tv-link{color:var(--accent);text-decoration:none;}
   .divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
+
+  /* 產業熱圖 */
+  .heatmap-section{margin-bottom:16px;}
+  .heatmap-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;}
+  .heatmap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;}
+  .heatmap-cell{border-radius:8px;padding:8px 10px;text-align:center;cursor:default;}
+  .heatmap-cell-name{font-size:11px;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .heatmap-cell-count{font-size:16px;font-weight:600;color:#fff;}
+  /* RSI 超買警示 */
+  .rsi-warning-section{margin-bottom:16px;}
+  .rsi-warning-title{font-size:13px;font-weight:600;color:#ef4444;margin-bottom:8px;}
+  .rsi-warning-list{display:flex;flex-wrap:wrap;gap:6px;}
+  .rsi-warning-pill{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:20px;padding:4px 10px;font-size:11px;color:#ef4444;font-family:'JetBrains Mono',monospace;}
 </style>
 </head>
 <body>
@@ -120,6 +133,18 @@
     <select id="dateSelect" onchange="loadDate()"></select>
     <div class="signal-count" id="signalCount"></div>
   </div>
+
+  <!-- 產業強弱熱圖 -->
+  <div class="heatmap-section" id="heatmapSection" style="display:none">
+    <div class="heatmap-title">🏆 產業強弱熱圖</div>
+    <div class="heatmap-grid" id="heatmapGrid"></div>
+  </div>
+  <!-- RSI 超買警示 -->
+  <div class="rsi-warning-section" id="rsiWarningSection" style="display:none">
+    <div class="rsi-warning-title">⚠️ RSI 超買警示（&gt;70）</div>
+    <div class="rsi-warning-list" id="rsiWarningList"></div>
+  </div>
+  <hr class="divider" id="warningDivider" style="display:none">
   <div class="hot-section" id="hotSection" style="display:none">
     <div class="hot-header">
       <span class="hot-title">⚡ 強勢股</span>
@@ -289,6 +314,41 @@ function renderHotSection(){
     </div>`;
   }).join('');
 }
+
+function renderHeatmap(){
+  if(!currentData.length){
+    document.getElementById('heatmapSection').style.display='none';
+    return;
+  }
+  const map={};
+  currentData.forEach(s=>{
+    const ind=s.industry||'未分類';
+    if(!map[ind])map[ind]=0;
+    map[ind]++;
+  });
+  const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const max=sorted[0]?sorted[0][1]:1;
+  const colors=['#1d4ed8','#2563eb','#3b82f6','#60a5fa','#93c5fd'];
+  document.getElementById('heatmapSection').style.display='';
+  document.getElementById('heatmapGrid').innerHTML=sorted.map(([ind,cnt])=>{
+    const intensity=Math.floor((cnt/max)*4);
+    const bg=colors[intensity]||colors[0];
+    return `<div class="heatmap-cell" style="background:${bg}" title="${ind}: ${cnt}支">
+      <div class="heatmap-cell-name">${ind}</div>
+      <div class="heatmap-cell-count">${cnt}</div>
+    </div>`;
+  }).join('');
+}
+function renderRsiWarning(){
+  const warnings=currentData.filter(s=>s.rsi>=70);
+  const sec=document.getElementById('rsiWarningSection');
+  const div=document.getElementById('warningDivider');
+  if(!warnings.length){sec.style.display='none';div.style.display='none';return;}
+  sec.style.display='';div.style.display='';
+  document.getElementById('rsiWarningList').innerHTML=warnings.map(s=>
+    `<span class="rsi-warning-pill">⚠️ ${s.code} ${s.name} RSI ${s.rsi}</span>`
+  ).join('');
+}
 function init(){
   const dates=Object.keys(ALL_DATA).sort((a,b)=>b.localeCompare(a));
   document.getElementById('dateSelect').innerHTML=dates.map(d=>`<option value="${d}">${d}</option>`).join('');
@@ -309,6 +369,8 @@ function loadDate(){
   currentData.sort((a,b)=>b.score-a.score);
   const hotCount=currentData.filter(s=>s.hot).length;
   document.getElementById('signalCount').innerHTML=`共 <strong>${currentData.length}</strong> 支${hotCount?` · <span style="color:var(--hot)">⚡${hotCount}</span>`:''}`;
+  renderHeatmap();
+  renderRsiWarning();
   renderHotSection();
   renderView();
 }
