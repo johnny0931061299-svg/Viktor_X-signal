@@ -361,9 +361,11 @@
     transition:border-color .3s, box-shadow .3s;
   }
   .stock-detail-panel.is-hot-detail{
-    border-color:rgba(212,175,110,0.4);
+    background:linear-gradient(160deg, rgba(212,175,110,0.07) 0%, rgba(19,14,8,0.98) 40%, rgba(13,10,26,0.98) 100%);
+    border-color:rgba(212,175,110,0.5);
     border-top-color:#e8c88a;
-    box-shadow:0 0 24px rgba(212,175,110,0.12), 0 0 48px rgba(212,175,110,0.06);
+    border-top-width:3px;
+    box-shadow:0 0 30px rgba(212,175,110,0.2), 0 0 60px rgba(212,175,110,0.08), inset 0 1px 0 rgba(212,175,110,0.15);
   }
   .stock-detail-panel.is-signal-detail{
     border-color:rgba(168,85,247,0.3);
@@ -376,12 +378,18 @@
   .sdp-empty .sdp-empty-icon{font-size:26px;margin-bottom:8px;opacity:.5;}
   .sdp-header{display:flex;align-items:center;gap:20px;margin-bottom:16px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06);}
   .sdp-code{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--accent2);}
-  .is-hot-detail .sdp-code{color:#e8c88a;text-shadow:0 0 12px rgba(212,175,110,0.5);}
+  .is-hot-detail .sdp-code{color:#e8c88a;font-size:22px;text-shadow:0 0 16px rgba(212,175,110,0.7), 0 0 32px rgba(212,175,110,0.3);}
   .is-signal-detail .sdp-code{color:#c084fc;text-shadow:0 0 12px rgba(192,132,252,0.4);}
   .sdp-name{font-size:15px;font-weight:600;color:var(--text);}
   .sdp-price{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--green);margin-left:auto;}
   .sdp-chg{font-family:'JetBrains Mono',monospace;font-size:13px;}
   .sdp-score{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px;}
+  .is-hot-detail .sdp-score{
+    background:rgba(212,175,110,0.18) !important;
+    color:#e8c88a !important;
+    border:1px solid rgba(212,175,110,0.4);
+    box-shadow:0 0 8px rgba(212,175,110,0.3);
+  }
   .sdp-mini-col{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:0 6px;}
   .sdp-mini-label{font-family:'Inter',sans-serif;font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);}
 
@@ -399,10 +407,20 @@
   .chip-bar-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;width:64px;text-align:right;flex-shrink:0;}
   .sdp-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;transition:background .3s,border-color .3s;}
   .is-hot-detail .sdp-box{
-    background:linear-gradient(145deg,rgba(212,175,110,0.07) 0%,rgba(19,15,10,0.95) 100%);
-    border-color:rgba(212,175,110,0.22);
+    background:linear-gradient(145deg,rgba(212,175,110,0.12) 0%,rgba(22,16,8,0.97) 100%);
+    border-color:rgba(212,175,110,0.3);
+    box-shadow:inset 0 1px 0 rgba(212,175,110,0.1);
   }
-  .is-hot-detail .sdp-box-title{color:rgba(212,175,110,0.6);}
+  .is-hot-detail .sdp-box-title{
+    color:rgba(232,200,138,0.75);
+    letter-spacing:.05em;
+  }
+  .is-hot-detail .sdp-header{
+    border-bottom-color:rgba(212,175,110,0.2);
+  }
+  .is-hot-detail .sdp-big-num{
+    text-shadow:0 0 10px currentColor;
+  }
   .is-signal-detail .sdp-box{
     background:linear-gradient(145deg,rgba(168,85,247,0.08) 0%,rgba(13,10,26,0.95) 100%);
     border-color:rgba(168,85,247,0.22);
@@ -1112,12 +1130,18 @@ function renderStockDetail(uid){
       '<span class="chip-bar-val" style="color:'+tColor+';">'+fmtChip(tv)+'</span>'+
     '</div>';
 
-  // 強勢原因區塊
+  // 強勢原因區塊（更豐富版）
+  var isHotStock = d.hotReasons && d.hotReasons.length > 0;
   var hotReasonHtml = '';
-  if(d.hotReasons && d.hotReasons.length > 0){
-    hotReasonHtml = '<div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
-      + '<span style="font-size:10px;color:#e8c88a;font-weight:600;letter-spacing:.05em;">⚡ 強勢原因</span>'
-      + d.hotReasons.map(function(r){ return '<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(212,175,110,0.15);border:1px solid rgba(212,175,110,0.35);color:#e8c88a;">'+r+'</span>'; }).join('')
+  if(isHotStock){
+    hotReasonHtml =
+      '<div style="background:linear-gradient(90deg,rgba(212,175,110,0.12),rgba(212,175,110,0.04),transparent);border-left:3px solid #e8c88a;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+      + '<span style="font-size:13px;font-weight:700;color:#e8c88a;text-shadow:0 0 10px rgba(212,175,110,0.5);white-space:nowrap;">⚡ 強勢股入選原因</span>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      + d.hotReasons.map(function(r){
+          return '<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(212,175,110,0.18);border:1px solid rgba(212,175,110,0.4);color:#e8c88a;font-weight:600;">'+r+'</span>';
+        }).join('')
+      + '</div>'
       + '</div>';
   }
 
