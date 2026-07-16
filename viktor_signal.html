@@ -343,20 +343,33 @@
 
   /* ── 個股詳情固定面板 ── */
   .stock-detail-panel{
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-top:2px solid var(--accent2);
-    border-radius:12px;
-    padding:16px;
-    margin-top:16px;
+    background:var(--surface2);
+    border:1px solid rgba(168,85,247,0.25);
+    border-top:3px solid var(--accent2);
+    border-radius:14px;
+    padding:18px;
+    margin-top:20px;
     min-height:120px;
+    transition:border-color .3s, box-shadow .3s;
+  }
+  .stock-detail-panel.is-hot-detail{
+    border-color:rgba(212,175,110,0.4);
+    border-top-color:#e8c88a;
+    box-shadow:0 0 24px rgba(212,175,110,0.12), 0 0 48px rgba(212,175,110,0.06);
+  }
+  .stock-detail-panel.is-signal-detail{
+    border-color:rgba(168,85,247,0.3);
+    border-top-color:#c084fc;
+    box-shadow:0 0 24px rgba(168,85,247,0.15), 0 0 48px rgba(168,85,247,0.06);
   }
   .sdp-empty{
     text-align:center;padding:36px 20px;color:var(--text-dim);font-size:13px;
   }
   .sdp-empty .sdp-empty-icon{font-size:26px;margin-bottom:8px;opacity:.5;}
-  .sdp-header{display:flex;align-items:center;gap:20px;margin-bottom:16px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--border);}
+  .sdp-header{display:flex;align-items:center;gap:20px;margin-bottom:16px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06);}
   .sdp-code{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--accent2);}
+  .is-hot-detail .sdp-code{color:#e8c88a;text-shadow:0 0 12px rgba(212,175,110,0.5);}
+  .is-signal-detail .sdp-code{color:#c084fc;text-shadow:0 0 12px rgba(192,132,252,0.4);}
   .sdp-name{font-size:15px;font-weight:600;color:var(--text);}
   .sdp-price{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--green);margin-left:auto;}
   .sdp-chg{font-family:'JetBrains Mono',monospace;font-size:13px;}
@@ -376,7 +389,9 @@
   .chip-bar-track{flex:1;height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;}
   .chip-bar-fill{height:100%;border-radius:4px;transition:width .3s ease;}
   .chip-bar-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;width:64px;text-align:right;flex-shrink:0;}
-  .sdp-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+  .sdp-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+  .is-hot-detail .sdp-box{border-color:rgba(212,175,110,0.18);}
+  .is-signal-detail .sdp-box{border-color:rgba(168,85,247,0.2);}
   .sdp-box-title{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;}
   .sdp-kline-svg{width:100%;height:120px;display:block;}
   .sdp-big-num{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;margin-bottom:6px;}
@@ -1179,14 +1194,26 @@ function selectSignalStock(uid){
   var contentEl = document.getElementById('sdpContent');
   if(!panel || !contentEl) return;
 
-  // 高亮選中列
+  // 移除舊高亮
   if(_selectedSignalUid){
-    var prevRows = document.querySelectorAll('[data-signal-uid="'+_selectedSignalUid+'"]');
-    prevRows.forEach(function(r){ r.classList.remove('signal-row-active'); });
+    document.querySelectorAll('[data-signal-uid="'+_selectedSignalUid+'"]').forEach(function(r){
+      r.classList.remove('signal-row-active');
+    });
   }
   _selectedSignalUid = uid;
-  var curRows = document.querySelectorAll('[data-signal-uid="'+uid+'"]');
-  curRows.forEach(function(r){ r.classList.add('signal-row-active'); });
+
+  // 高亮選中列
+  document.querySelectorAll('[data-signal-uid="'+uid+'"],[data-uid="'+uid+'"]').forEach(function(r){
+    r.classList.add('signal-row-active');
+  });
+
+  // 判斷是否強勢股
+  var stock = ALL_STOCKS.find(function(s){ return s.uid === uid || s.code === uid; });
+  var isHot = stock && stock.hot;
+
+  // 面板配色切換
+  panel.classList.remove('is-hot-detail','is-signal-detail');
+  panel.classList.add(isHot ? 'is-hot-detail' : 'is-signal-detail');
 
   empty.style.display = 'none';
   contentEl.style.display = 'block';
