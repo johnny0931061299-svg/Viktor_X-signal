@@ -520,9 +520,9 @@
     <div class="section-title">
       <span class="section-title-text" style="border-left:3px solid #d4af6e;padding-left:8px;color:#e8c88a;">⚡ 強勢股</span>
       <div class="section-title-line" style="background:linear-gradient(to right,rgba(212,175,110,0.4),transparent)"></div>
-      <span class="section-title-badge" style="background:rgba(212,175,110,0.15);color:#e8c88a;">2 支</span>
+      <span class="section-title-badge" id="hotBadge" style="background:rgba(212,175,110,0.15);color:#e8c88a;">2 支</span>
     </div>
-    <div class="hot-grid">
+    <div class="hot-grid" id="hotGrid">
       <div class="hot-card" onclick="toggleDetail('hot0')">
         <div class="hot-card-code">1301</div>
         <div class="hot-card-name">台塑</div>
@@ -705,7 +705,7 @@
       <span class="section-title-text" style="border-left:3px solid var(--accent2);padding-left:8px;">產業強弱熱圖</span>
       <div class="section-title-line"></div>
     </div>
-    <div class="heatmap-grid">
+    <div class="heatmap-grid" id="heatGrid">
       <div class="heatmap-cell" style="background:linear-gradient(135deg,#581c87,#7e22ce)"><div class="heatmap-cell-name">半導體</div><div class="heatmap-cell-count">8</div></div>
       <div class="heatmap-cell" style="background:linear-gradient(135deg,#6b21a8,#9333ea)"><div class="heatmap-cell-name">電腦周邊</div><div class="heatmap-cell-count">6</div></div>
       <div class="heatmap-cell" style="background:linear-gradient(135deg,#7c3aed,#a855f7)"><div class="heatmap-cell-name">航運</div><div class="heatmap-cell-count">5</div></div>
@@ -724,7 +724,7 @@
       <span class="section-title-text" style="color:#ef4444;border-left:3px solid #ef4444;padding-left:8px;">RSI 超買警示</span>
       <div class="section-title-line" style="background:linear-gradient(to right,rgba(239,68,68,0.4),transparent)"></div>
     </div>
-    <div class="rsi-list">
+    <div class="rsi-list" id="rsiList">
       <span class="rsi-pill">2330 台積電 RSI 72.3 注意拉回</span>
     </div>
   </div>
@@ -777,6 +777,95 @@ var ALL_DATA = {"2026-05-25": [{"code": "1419", "name": "新紡", "industry": "�
 
 // ── 目前選擇的日期資料 ──
 var ALL_STOCKS = [];
+
+// ══════════════════════════════════════════
+// 動態渲染函數：切換日期時重繪各區塊
+// ══════════════════════════════════════════
+
+// ── 強勢股區塊 ──
+function renderHotSection(){
+  var grid = document.getElementById('hotGrid');
+  var badge = document.getElementById('hotBadge');
+  if(!grid) return;
+  var hotStocks = ALL_STOCKS.filter(function(s){ return s.hot; });
+  if(badge) badge.textContent = hotStocks.length + ' 支';
+  if(hotStocks.length === 0){
+    grid.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:8px 0;">今日無強勢股</div>';
+    return;
+  }
+  grid.innerHTML = hotStocks.map(function(s){
+    var sb = scoreBadgeClass(s.score);
+    return '<div class="hot-card" data-uid="'+s.uid+'" onclick="selectSignalStock(this.dataset.uid)">'
+      +'<div class="hot-card-code">'+s.code+'</div>'
+      +'<div class="hot-card-name">'+s.name+'</div>'
+      +'<div class="hot-card-col-header"><span class="hot-col-label">收盤價</span><span class="hot-col-label">漲幅</span><span class="hot-col-label">評分</span></div>'
+      +'<div class="hot-card-row">'
+        +'<span class="hot-card-price">'+s.price.toFixed(1)+'</span>'
+        +'<span class="'+(s.change>=0?'up':'dn')+'" style="font-size:11px">'+(s.change>=0?'+':'')+s.change.toFixed(2)+'%</span>'
+        +'<span class="score-hot">'+s.score+'</span>'
+      +'</div>'
+      +'<div class="hot-card-tags"><span class="hot-tag">⚡強勢股</span></div>'
+      +'<div class="detail-panel" id="dp-hot-'+s.uid+'"></div>'
+    +'</div>';
+  }).join('');
+}
+
+// ── 產業熱圖 ──
+var HEATMAP_COLORS = [
+  'linear-gradient(135deg,#581c87,#7e22ce)',
+  'linear-gradient(135deg,#6b21a8,#9333ea)',
+  'linear-gradient(135deg,#7c3aed,#a855f7)',
+  'linear-gradient(135deg,#8b5cf6,#c084fc)',
+  'linear-gradient(135deg,#a78bfa,#d8b4fe)',
+  'linear-gradient(135deg,#3b2a6e,#5b3fa0)',
+  'linear-gradient(135deg,#1e1535,#2d1f52)',
+  'linear-gradient(135deg,#2e1065,#4c1d95)'
+];
+function renderHeatmap(){
+  var grid = document.getElementById('heatGrid');
+  if(!grid) return;
+  var map = {};
+  ALL_STOCKS.forEach(function(s){
+    if(!map[s.industry]) map[s.industry] = 0;
+    map[s.industry]++;
+  });
+  var sorted = Object.keys(map).sort(function(a,b){ return map[b]-map[a]; });
+  if(sorted.length === 0){
+    grid.innerHTML = '<div style="color:var(--text-dim);font-size:12px;">今日無產業資料</div>';
+    return;
+  }
+  grid.innerHTML = sorted.map(function(ind, i){
+    var bg = HEATMAP_COLORS[i % HEATMAP_COLORS.length];
+    return '<div class="heatmap-cell" style="background:'+bg+'">'
+      +'<div class="heatmap-cell-name">'+ind+'</div>'
+      +'<div class="heatmap-cell-count">'+map[ind]+'</div>'
+    +'</div>';
+  }).join('');
+}
+
+// ── RSI 超買警示 ──
+function renderRsiWarning(){
+  var list = document.getElementById('rsiList');
+  if(!list) return;
+  var warned = ALL_STOCKS.filter(function(s){ return s.rsi >= 70; });
+  if(warned.length === 0){
+    list.innerHTML = '<span style="color:var(--text-dim);font-size:12px;">今日無超買警示</span>';
+    return;
+  }
+  list.innerHTML = warned.map(function(s){
+    return '<span class="rsi-pill">'+s.code+' '+s.name+' RSI '+s.rsi.toFixed(1)+' 注意拉回</span>';
+  }).join('');
+}
+
+// ── 更新 Header 計數 ──
+function updateHeader(){
+  var hotCount = ALL_STOCKS.filter(function(s){ return s.hot; }).length;
+  var hdr = document.getElementById('signalCountHeader');
+  if(hdr) hdr.innerHTML = '共 <strong>'+ALL_STOCKS.length+'</strong> 支訊號 · <span style="color:var(--hot)">⚡'+hotCount+' 強勢</span>';
+  var badge = document.getElementById('signalBadge');
+  if(badge) badge.textContent = ALL_STOCKS.length + ' 支';
+}
+
 var PRICE_RANGES = [
   {label:'50元以下',min:0,max:50},
   {label:'50~100元',min:50,max:100},
@@ -1160,11 +1249,7 @@ function changeDate(date){
   renderHeatmap();
   renderRsiWarning();
   setView(_currentView, null);
-
-  // 更新 header 計數
-  var hotCount = ALL_STOCKS.filter(function(s){ return s.hot; }).length;
-  var hdr = document.getElementById('signalCountHeader');
-  if(hdr) hdr.innerHTML = '共 <strong>'+ALL_STOCKS.length+'</strong> 支訊號 · <span style="color:var(--hot)">⚡'+hotCount+' 強勢</span>';
+  updateHeader();
 
   // 重置詳情面板
   var empty = document.getElementById('sdpEmpty');
@@ -1178,7 +1263,12 @@ function changeDate(date){
   if(container) triggerFadeIn(container);
 }
 
+// 初始載入：渲染所有區塊
+renderHotSection();
+renderHeatmap();
+renderRsiWarning();
 renderByPrice();
+updateHeader();
 </script>
 </body>
 </html>
