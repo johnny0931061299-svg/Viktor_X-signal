@@ -1094,6 +1094,9 @@ function buildLineChartSvg(vals, color, refLo, refHi){
 
 function renderStockDetail(uid){
   var d = STOCK_DATA[uid];
+  // 從 ALL_STOCKS 補入 hotReasons
+  var _meta = ALL_STOCKS.find(function(s){ return s.uid===uid||s.code===uid; });
+  if(_meta && _meta.hotReasons) d.hotReasons = _meta.hotReasons;
   if(!d) return '';
   var chgHtml = d.change > 0 ? '<span class="sdp-chg up">+'+d.change.toFixed(2)+'%</span>' : '<span class="sdp-chg dn">'+d.change.toFixed(2)+'%</span>';
   var scoreBg = d.scoreColor === '#ef4444' ? 'rgba(239,68,68,.15)' : 'rgba(192,132,252,.15)';
