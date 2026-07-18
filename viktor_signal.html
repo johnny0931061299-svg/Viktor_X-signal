@@ -1325,7 +1325,9 @@ function changeDate(date){
       rsi: parseFloat(s.rsi) || 0,
       score: parseInt(s.score) || 0,
       hot: s.hot === true || s.hot === 1 || s.hot === '⚡',
-      hotReasons: s.hotReasons || s.hot_reasons || []
+      hotReasons: s.hotReasons || s.hot_reasons || [],
+      marketCap: s.marketCap || s.market_cap || 0,
+      capType: s.capType || s.cap_type || '--'
     };
   });
 
