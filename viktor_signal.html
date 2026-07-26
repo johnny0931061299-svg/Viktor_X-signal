@@ -1400,6 +1400,8 @@ function changeDate(date){
       grade: s.grade || d.grade || 'C',
       gradeConds: s.gradeConds || s.grade_conds || d.gradeConds || {},
       bbColor: (function(p){ return p >= 80 ? '#ef4444' : p >= 50 ? '#f59e0b' : '#10b981'; })(d.bbPct != null ? d.bbPct : 50),
+      marketCap: d.marketCap != null ? d.marketCap : (s.marketCap || s.market_cap || 0),
+      capType: d.capType || s.capType || s.cap_type || '--',
       kline: d.close || [], rsiHist: d.rsi || [], adxHist: d.adx || []
     };
   });
@@ -1423,12 +1425,17 @@ function changeDate(date){
   if(container) triggerFadeIn(container);
 }
 
-// 初始載入：渲染所有區塊
-renderHotSection();
-renderHeatmap();
-renderRsiWarning();
-renderByPrice();
-updateHeader();
+// 初始載入：和切換日期使用同一個完整資料重建流程
+var initialDateSelect = document.getElementById('dateSelect');
+if(initialDateSelect && initialDateSelect.value){
+  changeDate(initialDateSelect.value);
+} else {
+  renderHotSection();
+  renderHeatmap();
+  renderRsiWarning();
+  renderByPrice();
+  updateHeader();
+}
 </script>
 </body>
 </html>
